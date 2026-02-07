@@ -11,6 +11,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -56,10 +57,16 @@ public class AuthService {
         "purpose", "verify"
     ));
     String verifyUrl = clientBaseUrl + "/verify-email?token=" + verifyToken;
+    // Send email asynchronously to avoid blocking signup response
+    sendVerificationEmailAsync(saved.getEmail(), saved.getUsername(), verifyUrl);
+  }
+
+  @Async
+  private void sendVerificationEmailAsync(String email, String userName, String verifyUrl) {
     try {
-      emailService.sendVerificationEmail(saved.getEmail(), saved.getUsername(), verifyUrl);
+      emailService.sendVerificationEmail(email, userName, verifyUrl);
     } catch (RuntimeException ex) {
-      logger.warn("Verification email failed. Signup still succeeds for {}.", saved.getEmail(), ex);
+      logger.warn("Verification email failed. Signup already succeeded for {}.", email, ex);
     }
   }
 

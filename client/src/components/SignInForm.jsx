@@ -1,44 +1,48 @@
 import { useState } from "react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import { signIn } from "../services/authService.js";
 
 const SignInForm = ({ onSuccess }) => {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      await signIn(form);
-      onSuccess();
-    } catch (err) {
-      const message = err?.response?.data?.message || "Sign in failed.";
-      setError(message);
-    } finally {
-      setLoading(false);
+  const formik = useFormik({
+    initialValues: { email: "", password: "" },
+    validationSchema: Yup.object({
+      email: Yup.string().email("Enter a valid email").required("Email is required"),
+      password: Yup.string()
+        .min(6, "Password must be at least 6 characters")
+        .required("Password is required")
+    }),
+    onSubmit: async (values, { setSubmitting }) => {
+      setServerError("");
+      try {
+        await signIn(values);
+        onSuccess();
+      } catch (err) {
+        const message = err?.response?.data?.message || "Sign in failed.";
+        setServerError(message);
+      } finally {
+        setSubmitting(false);
+      }
     }
-  };
+  });
 
   return (
-    <form className="card" onSubmit={handleSubmit}>
+    <form className="card" onSubmit={formik.handleSubmit} noValidate>
       <label className="field">
         <span>Email</span>
         <input
           type="email"
           name="email"
-          value={form.email}
-          onChange={handleChange}
-          required
+          value={formik.values.email}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
         />
+        {formik.touched.email && formik.errors.email && (
+          <p className="error">{formik.errors.email}</p>
+        )}
       </label>
       <label className="field">
         <span>Password</span>
@@ -46,9 +50,9 @@ const SignInForm = ({ onSuccess }) => {
           <input
             type={showPassword ? "text" : "password"}
             name="password"
-            value={form.password}
-            onChange={handleChange}
-            required
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
           />
           <button
             type="button"
@@ -58,10 +62,13 @@ const SignInForm = ({ onSuccess }) => {
             {showPassword ? "Hide" : "Show"}
           </button>
         </div>
+        {formik.touched.password && formik.errors.password && (
+          <p className="error">{formik.errors.password}</p>
+        )}
       </label>
-      {error && <p className="error">{error}</p>}
-      <button className="primary" type="submit" disabled={loading}>
-        {loading ? "Signing in..." : "Sign In"}
+      {serverError && <p className="error">{serverError}</p>}
+      <button className="primary" type="submit" disabled={formik.isSubmitting}>
+        {formik.isSubmitting ? "Signing in..." : "Sign In"}
       </button>
     </form>
   );

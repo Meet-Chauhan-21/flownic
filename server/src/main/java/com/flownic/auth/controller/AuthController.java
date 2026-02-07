@@ -6,6 +6,7 @@ import com.flownic.auth.dto.SignUpRequest;
 import com.flownic.auth.dto.UserResponse;
 import com.flownic.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -32,7 +33,7 @@ public class AuthController {
   }
 
   @PostMapping("/signup")
-  public ResponseEntity<ApiResponse> signUp(@RequestBody SignUpRequest request) {
+  public ResponseEntity<ApiResponse> signUp(@Valid @RequestBody SignUpRequest request) {
     authService.signUp(request);
     return ResponseEntity.ok(new ApiResponse(true, "Verification email sent"));
   }
@@ -45,7 +46,7 @@ public class AuthController {
 
   @PostMapping("/signin")
   public ResponseEntity<ApiResponse> signIn(
-      @RequestBody AuthRequest request,
+      @Valid @RequestBody AuthRequest request,
       HttpServletResponse response
   ) {
     String jwt = authService.signIn(request);
