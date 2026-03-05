@@ -89,7 +89,7 @@ public class AuthService {
     ));
   }
 
-  public void verifyEmailToken(String token) {
+  public String verifyEmailToken(String token) {
     Claims claims = jwtUtil.parseVerifyToken(token);
     String userId = claims.get("userId", String.class);
     String purpose = claims.get("purpose", String.class);
@@ -104,6 +104,12 @@ public class AuthService {
     user.setVerified(true);
     user.setRole(Role.USER);
     userRepository.save(user);
+    
+    // Generate and return auth token so user is immediately signed in
+    return jwtUtil.generateAuthToken(user.getEmail(), Map.of(
+        "role", user.getRole().name(),
+        "userId", user.getId()
+    ));
   }
 
   public User getUserByEmail(String email) {

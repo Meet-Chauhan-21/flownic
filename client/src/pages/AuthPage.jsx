@@ -16,7 +16,7 @@ const AuthPage = () => {
   };
 
   const handleSignUpSuccess = () => {
-    setMessage("Verification email sent.");
+    setMessage("Mail sent!");
     setSubMessage("Please verify your email.");
     setActiveTab("signup");
   };

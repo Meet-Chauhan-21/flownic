@@ -39,8 +39,21 @@ public class AuthController {
   }
 
   @GetMapping("/verify-email")
-  public ResponseEntity<ApiResponse> verifyEmail(@RequestParam("token") String token) {
-    authService.verifyEmailToken(token);
+  public ResponseEntity<ApiResponse> verifyEmail(
+      @RequestParam("token") String token,
+      HttpServletResponse response
+  ) {
+    String jwt = authService.verifyEmailToken(token);
+    
+    ResponseCookie cookie = ResponseCookie.from(cookieName, jwt)
+        .httpOnly(true)
+        .secure(cookieSecure)
+        .path("/")
+        .sameSite("Lax")
+        .maxAge(60 * 60 * 24)
+        .build();
+
+    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     return ResponseEntity.ok(new ApiResponse(true, "Email verified"));
   }
 
